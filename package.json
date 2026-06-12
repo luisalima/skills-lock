@@ -12,7 +12,8 @@
     "README.md"
   ],
   "scripts": {
-    "test": "node test/e2e.mjs"
+    "test": "node test/e2e.mjs",
+    "prepublishOnly": "node test/e2e.mjs"
   },
   "engines": {
     "node": ">=18"
@@ -24,5 +25,14 @@
     "package-manager",
     "lockfile"
   ],
-  "license": "MIT"
+  "author": "Luisa Lima",
+  "license": "MIT",
+  "homepage": "https://github.com/luisalima/skills-lock#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/luisalima/skills-lock.git"
+  },
+  "bugs": {
+    "url": "https://github.com/luisalima/skills-lock/issues"
+  }
 }
