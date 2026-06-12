@@ -6,7 +6,7 @@ import { resolveRef, ensureCommit } from './git.mjs'
 import { findSkill } from './skills.mjs'
 import { hashTree } from './integrity.mjs'
 import { agentTargets } from './agents.mjs'
-import { validateSkillName, assertContained } from './validate.mjs'
+import { validateSkillName, assertContained, assertNoSymlinks } from './validate.mjs'
 
 export function cacheRoot(root) {
   if (process.env.SKILLS_LOCK_CACHE) {
@@ -33,6 +33,7 @@ function resolveSkill(root, name, entry, locked, { frozen, update }) {
     const baseDir = path.resolve(root, spec.filePath)
     if (!fs.existsSync(baseDir)) throw new Error(`skill "${name}": ${spec.raw} does not exist`)
     const skill = findSkill(baseDir, name, spec.skillPath, spec.raw)
+    assertNoSymlinks(skill.dir)
     const integrity = hashTree(skill.dir)
     if (frozen) {
       assertFrozenMatch(name, spec, locked, integrity)
@@ -62,6 +63,7 @@ function resolveSkill(root, name, entry, locked, { frozen, update }) {
   const label = `${spec.raw} @ ${commit.slice(0, 12)}`
   const knownPath = commit === locked?.commit ? locked?.path : null
   const skill = findSkill(sourceDir, name, spec.skillPath ?? knownPath, label)
+  assertNoSymlinks(skill.dir)
   const integrity = hashTree(skill.dir)
   if (frozen) {
     assertFrozenMatch(name, spec, locked, integrity)

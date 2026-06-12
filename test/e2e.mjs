@@ -186,6 +186,36 @@ ok('C2: a traversing skill name cannot delete outside the project', () => {
   assert.ok(fs.existsSync(path.join(victim, 'keep.txt')), 'victim dir must survive')
 })
 
+ok('M1: a skill containing a symlink is refused and not installed', () => {
+  const evilDir = path.join(tmp, 'evil-skill')
+  fs.mkdirSync(evilDir, { recursive: true })
+  fs.writeFileSync(path.join(evilDir, 'SKILL.md'), '---\nname: evil\ndescription: x\n---\n')
+  fs.symlinkSync('/etc/passwd', path.join(evilDir, 'leak'))
+  writeSkills({ evil: `file:${evilDir}` })
+  const out = runFails('install')
+  assert.match(out, /symlink/)
+  assert.ok(!fs.existsSync(path.join(project, '.claude', 'skills', 'evil')), 'symlinked skill must not install')
+})
+
+ok('M2: an entry.path escaping the source tree is refused', () => {
+  writeSkills({ 'release-notes': { source: `${skillsRepo}#v1.0.0`, path: '../../../../etc' } })
+  assert.match(runFails('install'), /escapes/)
+})
+
+ok('C2b: a traversing agentDirs override cannot escape the project', () => {
+  const victim = path.join(tmp, 'agentdir-victim')
+  fs.mkdirSync(victim, { recursive: true })
+  fs.writeFileSync(path.join(victim, 'keep.txt'), 'precious')
+  const pkgPath = path.join(project, 'package.json')
+  const pkg = readJSON(pkgPath)
+  pkg.skills = { 'release-notes': `${skillsRepo}#v1.0.0` }
+  pkg.skillsConfig = { agents: ['claude-code'], agentDirs: { 'claude-code': '../../agentdir-victim' } }
+  fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2))
+  fs.rmSync(lockPath, { force: true })
+  assert.match(runFails('install'), /escapes/)
+  assert.ok(fs.existsSync(path.join(victim, 'keep.txt')), 'victim dir must survive')
+})
+
 // restore a clean manifest so the line below is a no-op if reordered
 writeSkills({ 'release-notes': `${skillsRepo}#v1.0.0` })
 

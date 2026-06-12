@@ -1,4 +1,5 @@
 import path from 'node:path'
+import { assertContained } from './validate.mjs'
 
 // Project-scoped skill directories for common agents. Extend or override
 // per-project via skillsConfig.agentDirs in package.json.
@@ -23,6 +24,10 @@ export function agentTargets(root, config) {
         `unknown agent "${agent}" — known agents: ${known}, or map it via skillsConfig.agentDirs`
       )
     }
-    return { agent, dir: path.join(root, dir) }
+    // agentDirs comes from package.json; a traversing or absolute override
+    // would aim the install (rm + copy) outside the project. Keep it inside.
+    const target = path.join(root, dir)
+    assertContained(root, target, `agent "${agent}" directory`)
+    return { agent, dir: target }
   })
 }

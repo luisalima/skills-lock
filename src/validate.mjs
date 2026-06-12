@@ -1,3 +1,4 @@
+import fs from 'node:fs'
 import path from 'node:path'
 
 // A skill name becomes a directory name under each agent's skills folder and
@@ -14,6 +15,29 @@ export function validateSkillName(name) {
     )
   }
   return name
+}
+
+// A skill directory is hashed for integrity and copied verbatim into agent
+// skills folders. A symlink in that tree is dangerous twice over: it is
+// skipped by the content hash (so --frozen can't see it change), and once
+// copied it lets a skill point an agent at arbitrary files (~/.ssh/id_rsa,
+// /etc/passwd, …). Skills are markdown + scripts + assets and never need
+// symlinks, so reject the whole class. Also rejects a root that is itself a
+// symlink (a directory-level escape that lexical containment can't catch).
+export function assertNoSymlinks(dir) {
+  if (fs.lstatSync(dir).isSymbolicLink()) {
+    throw new Error(`refusing skill at "${dir}": path is a symlink`)
+  }
+  const walk = (d) => {
+    for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+      const full = path.join(d, e.name)
+      if (e.isSymbolicLink()) {
+        throw new Error(`refusing skill: contains a symlink "${path.relative(dir, full)}" (not allowed)`)
+      }
+      if (e.isDirectory()) walk(full)
+    }
+  }
+  walk(dir)
 }
 
 // Defense in depth for any path derived from untrusted input: assert that

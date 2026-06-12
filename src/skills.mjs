@@ -1,5 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import { assertContained } from './validate.mjs'
 
 // Minimal YAML frontmatter parser — skills only need flat string fields
 // (name, description), so a full YAML parser is not worth a dependency.
@@ -52,7 +53,10 @@ export function discoverSkills(rootDir, maxDepth = 6) {
 // then by directory name.
 export function findSkill(sourceDir, name, skillPath, sourceLabel) {
   if (skillPath) {
+    // skillPath comes from the manifest; "../../etc" must not read or copy
+    // content from outside the fetched source tree.
     const dir = path.join(sourceDir, skillPath)
+    assertContained(sourceDir, dir, `skill "${name}" path`)
     if (!fs.existsSync(path.join(dir, 'SKILL.md'))) {
       throw new Error(`skill "${name}": no SKILL.md at path "${skillPath}" in ${sourceLabel}`)
     }
