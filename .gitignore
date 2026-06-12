@@ -1,2 +1,7 @@
 node_modules/
 .skills/
+
+# Local scratch — issue drafts, notes
+issues.md
+issue-comment*
+*~

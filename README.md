@@ -131,6 +131,44 @@ Set `SKILLS_LOCK_CACHE` to relocate the git checkout cache (default:
 `.skills/cache/` in the project, auto-gitignored) — useful for sharing a
 cache directory across CI jobs.
 
+## Security
+
+A skill is a prompt injected into a privileged agent, and the manifest that
+selects skills is often written by someone other than the person running the
+install — you clone a repo and run `skills-lock install` to restore *its*
+skills. So the threat model treats `package.json` and `skills-lock.json` as
+**untrusted input**, and running `install` against a hostile manifest must
+not execute code or touch anything outside the project.
+
+What that means concretely:
+
+- **Source transports are allowlisted.** Only `http(s)://`, `git://`,
+  `ssh://`, and explicit local paths are accepted. Git's `ext::` transport
+  (which runs an arbitrary command) and other schemes are refused — including
+  via the `git+` prefix, which does not bypass the check.
+- **No git argument injection.** Refs and URLs may not begin with `-`, and
+  `--` terminates option parsing before any user value reaches `git`. Commits
+  read from the lockfile must be full 40-hex SHAs before they touch git.
+- **No path escapes.** Skill names are restricted to a safe directory
+  charset; the install destination, `entry.path`, and `skillsConfig.agentDirs`
+  overrides are all asserted to stay inside their expected directory before
+  any recursive remove or copy.
+- **No symlinks.** A skill tree containing a symlink is refused, closing both
+  the integrity-hash bypass (symlinks evade content hashing) and the
+  arbitrary-file-read risk (a symlink copied into an agent dir pointing at,
+  say, `~/.ssh/id_rsa`).
+- **Integrity is verified.** `install --frozen` recomputes a sha256 tree hash
+  of each skill and fails on any mismatch, so a rewritten tag or a poisoned
+  cache cannot slip modified instructions past CI.
+
+These guarantees are covered by adversarial regression tests in
+`test/e2e.mjs` (each asserts the *absence* of the bad effect — no executed
+payload, victim directories left intact — not merely that an error is shown).
+
+Two residual notes: `file:` sources are inherently local-trust (they read a
+path you put in your own manifest), and `ssh://` hostname hardening relies on
+your installed git (use git ≥ 2.30). Found a gap? Please open an issue.
+
 ## How this relates to prior art
 
 | | manifest | lockfile | pinning | integrity | new infra needed |
