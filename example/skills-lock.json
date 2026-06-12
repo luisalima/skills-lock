@@ -1,0 +1,21 @@
+{
+  "lockfileVersion": 1,
+  "skills": {
+    "frontend-design": {
+      "spec": "anthropics/skills",
+      "resolved": "https://github.com/anthropics/skills.git",
+      "ref": null,
+      "commit": "57546260929473d4e0d1c1bb75297be2fdfa1949",
+      "path": "skills/frontend-design",
+      "integrity": "sha256-ZlxYVFXey8sCEWvJKK31FIuc0PZ7frSQjIwNZHwA9oo="
+    },
+    "webapp-testing": {
+      "spec": "anthropics/skills",
+      "resolved": "https://github.com/anthropics/skills.git",
+      "ref": null,
+      "commit": "57546260929473d4e0d1c1bb75297be2fdfa1949",
+      "path": "skills/webapp-testing",
+      "integrity": "sha256-z7I+8MOZw26SRxQqerWsDgPAPhyfBHsPdQIjKixQtWQ="
+    }
+  }
+}

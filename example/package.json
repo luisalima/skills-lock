@@ -1,0 +1,8 @@
+{
+  "name": "skills-pm-example",
+  "private": true,
+  "skills": {
+    "frontend-design": "anthropics/skills",
+    "webapp-testing": "anthropics/skills"
+  }
+}

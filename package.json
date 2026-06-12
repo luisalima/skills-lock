@@ -1,0 +1,28 @@
+{
+  "name": "skills-pm",
+  "version": "0.1.0",
+  "description": "Declarative package management for agent skills — manifest in package.json, lockfile with pinned commits, reproducible installs.",
+  "type": "module",
+  "bin": {
+    "skills-pm": "bin/skills-pm.mjs"
+  },
+  "files": [
+    "bin",
+    "src",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node test/e2e.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "agent-skills",
+    "skills",
+    "claude-code",
+    "package-manager",
+    "lockfile"
+  ],
+  "license": "MIT"
+}
