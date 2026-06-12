@@ -150,5 +150,44 @@ ok('multi-agent install via skillsConfig', () => {
   assert.ok(fs.existsSync(path.join(project, '.cursor', 'skills', 'release-notes', 'SKILL.md')))
 })
 
+// --- security regressions: an untrusted package.json must not run code or
+// escape the project when `install` is executed against it ---
+
+function writeSkills(skills) {
+  const pkgPath = path.join(project, 'package.json')
+  const pkg = readJSON(pkgPath)
+  pkg.skills = skills
+  delete pkg.skillsConfig
+  fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2))
+  fs.rmSync(lockPath, { force: true })
+}
+
+ok('C1: git+ext:: transport is refused (no command execution)', () => {
+  const canary = path.join(tmp, 'C1-CANARY')
+  writeSkills({ evil: `git+ext::sh -c "touch ${canary}"` })
+  const out = runFails('install')
+  assert.match(out, /only http\(s\)\/git\/ssh remotes or local paths/)
+  assert.ok(!fs.existsSync(canary), 'ext:: payload must not execute')
+})
+
+ok('C1b: a ref starting with "-" is rejected', () => {
+  writeSkills({ 'release-notes': `${skillsRepo}#--upload-pack=evil` })
+  assert.match(runFails('install'), /invalid ref/)
+})
+
+ok('C2: a traversing skill name cannot delete outside the project', () => {
+  const victim = path.join(tmp, 'victim')
+  fs.mkdirSync(victim, { recursive: true })
+  fs.writeFileSync(path.join(victim, 'keep.txt'), 'precious')
+  // ../../victim relative to <project>/.claude/skills resolves to <tmp>/victim
+  writeSkills({ '../../../victim': `${skillsRepo}#v1.0.0` })
+  const out = runFails('install')
+  assert.match(out, /invalid skill name/)
+  assert.ok(fs.existsSync(path.join(victim, 'keep.txt')), 'victim dir must survive')
+})
+
+// restore a clean manifest so the line below is a no-op if reordered
+writeSkills({ 'release-notes': `${skillsRepo}#v1.0.0` })
+
 fs.rmSync(tmp, { recursive: true, force: true })
 console.log(`\nall ${passed} tests passed`)

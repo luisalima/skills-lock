@@ -12,6 +12,23 @@
 //   file:relative/or/abs/path   local directory (no commit pinning)
 
 const GITHUB_SHORTHAND = /^[\w.-]+\/[\w.-]+$/
+const ALLOWED_SCHEME = /^(https?|git|ssh):\/\//
+const LOCAL_PATH = /^(\/|\.\/|\.\.\/)/
+
+// A git remote URL is handed to `git` as a positional argument. Even without
+// a shell, git treats some URLs as code: the `ext::` transport runs an
+// arbitrary command, and a value starting with "-" is parsed as an option.
+// Only well-known network schemes and explicit local paths are allowed.
+function assertSafeGitUrl(url, name) {
+  if (url.startsWith('-')) {
+    throw new Error(`skill "${name}": source "${url}" may not start with "-"`)
+  }
+  if (!ALLOWED_SCHEME.test(url) && !LOCAL_PATH.test(url)) {
+    throw new Error(
+      `skill "${name}": refusing source "${url}" — only http(s)/git/ssh remotes or local paths are allowed`
+    )
+  }
+}
 
 export function parseSpec(entry, name) {
   const source = typeof entry === 'string' ? entry : entry?.source
@@ -31,20 +48,25 @@ export function parseSpec(entry, name) {
     ref = rest.slice(hash + 1)
     rest = rest.slice(0, hash)
   }
+  if (ref !== null && (ref.length === 0 || ref.startsWith('-'))) {
+    // A ref is passed to `git` as a positional; "-..." would be read as an option.
+    throw new Error(`skill "${name}": invalid ref "${ref}"`)
+  }
 
   let url
   if (GITHUB_SHORTHAND.test(rest)) {
     url = `https://github.com/${rest}.git`
   } else if (rest.startsWith('git+')) {
     url = rest.slice('git+'.length)
-  } else if (/^(https?|git|ssh):\/\//.test(rest)) {
+  } else if (ALLOWED_SCHEME.test(rest)) {
     url = rest
-  } else if (rest.startsWith('/') || rest.startsWith('./') || rest.startsWith('../')) {
+  } else if (LOCAL_PATH.test(rest)) {
     // local path used as a git remote (shared-filesystem setups, tests)
     url = rest
   } else {
     throw new Error(`skill "${name}": unsupported source spec "${source}"`)
   }
+  assertSafeGitUrl(url, name)
   return { type: 'git', url, ref, skillPath, raw: source }
 }
 

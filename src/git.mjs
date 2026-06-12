@@ -20,9 +20,11 @@ export function resolveRef(url, ref) {
   const target = ref ?? 'HEAD'
   let out
   try {
+    // `--` ends option parsing: url and refs that follow are always treated
+    // as positionals, never as git options, even if they begin with "-".
     out = ref
-      ? git(['ls-remote', url, `refs/tags/${ref}^{}`, `refs/tags/${ref}`, `refs/heads/${ref}`, ref])
-      : git(['ls-remote', url, 'HEAD'])
+      ? git(['ls-remote', '--', url, `refs/tags/${ref}^{}`, `refs/tags/${ref}`, `refs/heads/${ref}`, ref])
+      : git(['ls-remote', '--', url, 'HEAD'])
   } catch (err) {
     throw new Error(`could not reach ${url}: ${firstLine(err.stderr) ?? err.message}`)
   }
@@ -44,6 +46,11 @@ export function resolveRef(url, ref) {
 // Materialize a commit's tree at cacheDir (no .git retained). Reuses the
 // cache if it already exists; builds in a temp dir and renames for atomicity.
 export function ensureCommit(url, commit, cacheDir) {
+  if (!FULL_SHA.test(commit)) {
+    // commit may originate from the lockfile; never pass an unvalidated
+    // value to git as a positional (could be read as an option).
+    throw new Error(`refusing to fetch non-SHA commit "${commit}" from ${url}`)
+  }
   if (fs.existsSync(cacheDir)) return cacheDir
   fs.mkdirSync(path.dirname(cacheDir), { recursive: true })
   const tmp = `${cacheDir}.tmp-${process.pid}`

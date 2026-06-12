@@ -6,6 +6,7 @@ import { resolveRef, ensureCommit } from './git.mjs'
 import { findSkill } from './skills.mjs'
 import { hashTree } from './integrity.mjs'
 import { agentTargets } from './agents.mjs'
+import { validateSkillName, assertContained } from './validate.mjs'
 
 export function cacheRoot(root) {
   if (process.env.SKILLS_LOCK_CACHE) {
@@ -84,11 +85,17 @@ function assertFrozenMatch(name, spec, locked, integrity) {
 }
 
 function copyToAgents(root, config, name, skillDir) {
+  // `name` is an attacker-controlled manifest key and is used in a recursive
+  // rm before the copy — a traversing name (e.g. "../../x") would delete and
+  // overwrite paths outside the agent directory. Validate, then assert the
+  // resolved destination stays inside the target dir.
+  validateSkillName(name)
   const installed = []
   for (const target of agentTargets(root, config)) {
     const dest = path.join(target.dir, name)
-    fs.rmSync(dest, { recursive: true, force: true })
+    assertContained(target.dir, dest, `skill "${name}" destination`)
     fs.mkdirSync(target.dir, { recursive: true })
+    fs.rmSync(dest, { recursive: true, force: true })
     fs.cpSync(skillDir, dest, { recursive: true })
     installed.push(target.agent)
   }
@@ -104,6 +111,8 @@ export function installAll(root, { frozen = false, update = false, only = null }
     return
   }
   if (frozen && only) throw new Error('--frozen cannot be combined with a partial update')
+
+  names.forEach((name) => validateSkillName(name))
 
   const newLock = { lockfileVersion: LOCKFILE_VERSION, skills: {} }
   for (const name of names) {
@@ -134,10 +143,13 @@ export function removeSkills(root, names) {
   const lock = loadLock(root)
   for (const name of names) {
     if (!(name in manifest.skills)) throw new Error(`skill "${name}" is not in package.json`)
+    validateSkillName(name)
     delete manifest.skills[name]
     if (lock) delete lock.skills[name]
     for (const target of agentTargets(root, manifest.config)) {
-      fs.rmSync(path.join(target.dir, name), { recursive: true, force: true })
+      const dest = path.join(target.dir, name)
+      assertContained(target.dir, dest, `skill "${name}" destination`)
+      fs.rmSync(dest, { recursive: true, force: true })
     }
     console.log(`- ${name} removed`)
   }

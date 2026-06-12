@@ -5,6 +5,7 @@ import { parseSpec, repoSlug } from './spec.mjs'
 import { resolveRef, ensureCommit } from './git.mjs'
 import { discoverSkills, findSkill } from './skills.mjs'
 import { installAll, removeSkills, cacheRoot } from './install.mjs'
+import { validateSkillName } from './validate.mjs'
 
 const HELP = `skills-lock — the lock layer for agent skills
 
@@ -108,6 +109,9 @@ async function cmdAdd(argv) {
     duplicateNames.set(s.name, (duplicateNames.get(s.name) ?? 0) + 1)
   }
   for (const skill of selected) {
+    // skill.name may come from untrusted SKILL.md frontmatter; never persist
+    // a name that can't be a safe directory.
+    validateSkillName(skill.name)
     // Short string form when the skill is unambiguously discoverable by
     // name; otherwise record the path explicitly.
     const needsPath = values.path || (duplicateNames.get(skill.name) ?? 0) > 1
