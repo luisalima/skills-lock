@@ -1,10 +1,10 @@
-# skills-pm
+# skills-lock
 
-**Declarative package management for agent skills.** Skills are declared in
-`package.json`, pinned to exact commits in `skills-lock.json`, and installed
-into agent directories (`.claude/skills/`, `.cursor/skills/`, …) with one
-command. Like npm, but the packages are `SKILL.md` directories and the
-registry is any git repo.
+**The lock layer for agent skills.** Skills are declared in `package.json`,
+pinned to exact commits and content hashes in `skills-lock.json`, and
+installed into agent directories (`.claude/skills/`, `.cursor/skills/`, …)
+with one command. Like a package manager's lockfile workflow, but the
+packages are `SKILL.md` directories and the registry is any git repo.
 
 ```jsonc
 // package.json
@@ -19,14 +19,14 @@ registry is any git repo.
 ```
 
 ```console
-$ skills-pm install
+$ skills-lock install
 + frontend-design  anthropics/skills @ 575462609294  → claude-code, cursor
 + code-review      acme/skills#v2.1.0 @ 8f3c2a19bd04  → claude-code, cursor
 + deploy           acme/skills#v2.1.0 @ 8f3c2a19bd04  → claude-code, cursor
 ✓ 3 skill(s) installed, skills-lock.json written
 ```
 
-Commit `skills-lock.json`. Teammates and CI run `skills-pm install --frozen`
+Commit `skills-lock.json`. Teammates and CI run `skills-lock install --frozen`
 and get byte-identical skills, verified by content hash — or a hard failure.
 
 ## Why
@@ -52,7 +52,7 @@ would suffice as the standard manifest — this tool is the existence proof.
 ## Install
 
 ```console
-$ npm install -g skills-pm    # or: npx skills-pm ...
+$ npm install -g skills-lock    # or: npx skills-lock ...
 ```
 
 Requires Node ≥ 18 and git. Zero runtime dependencies.
@@ -61,12 +61,12 @@ Requires Node ≥ 18 and git. Zero runtime dependencies.
 
 | Command | What it does |
 |---|---|
-| `skills-pm install` | Resolve + install everything in `"skills"`, write `skills-lock.json`. Already-locked skills are **not** re-resolved — the pin holds until you ask. |
-| `skills-pm install --frozen` | CI mode: no resolution, no lockfile writes. Fails if the lock is missing, out of sync with `package.json`, or any content hash mismatches. |
-| `skills-pm add <source> [--skill name]… [--path dir] [--list]` | Discover skills in a source, add them to `package.json`, install. `--list` previews without installing. |
-| `skills-pm update [name…]` | Re-resolve floating refs (e.g. `#main`) to their current commit and re-pin. The only command that moves a pin. |
-| `skills-pm remove <name…>` | Remove from manifest, lockfile, and all agent directories. |
-| `skills-pm list` | Declared skills with their pinned commits. |
+| `skills-lock install` | Resolve + install everything in `"skills"`, write `skills-lock.json`. Already-locked skills are **not** re-resolved — the pin holds until you ask. |
+| `skills-lock install --frozen` | CI mode: no resolution, no lockfile writes. Fails if the lock is missing, out of sync with `package.json`, or any content hash mismatches. |
+| `skills-lock add <source> [--skill name]… [--path dir] [--list]` | Discover skills in a source, add them to `package.json`, install. `--list` previews without installing. |
+| `skills-lock update [name…]` | Re-resolve floating refs (e.g. `#main`) to their current commit and re-pin. The only command that moves a pin. |
+| `skills-lock remove <name…>` | Remove from manifest, lockfile, and all agent directories. |
+| `skills-lock list` | Declared skills with their pinned commits. |
 
 ## Sources
 
@@ -78,7 +78,7 @@ https://host/repo.git#ref   any git remote (GitLab, internal mirrors, …)
 file:../team-skills         local directory — no pinning, integrity only
 ```
 
-A repo can host many skills (a catalog): `skills-pm` finds every `SKILL.md`
+A repo can host many skills (a catalog): `skills-lock` finds every `SKILL.md`
 and matches by frontmatter `name`, falling back to directory name. When a
 name is ambiguous, use the long form `{ "source": …, "path": … }`.
 
@@ -124,10 +124,10 @@ Built-in: `claude-code`, `cursor`, `opencode`, `windsurf`, `github-copilot`,
 ## CI
 
 ```yaml
-- run: npx skills-pm install --frozen
+- run: npx skills-lock install --frozen
 ```
 
-Set `SKILLS_PM_CACHE` to relocate the git checkout cache (default:
+Set `SKILLS_LOCK_CACHE` to relocate the git checkout cache (default:
 `.skills/cache/` in the project, auto-gitignored) — useful for sharing a
 cache directory across CI jobs.
 
@@ -138,11 +138,11 @@ cache directory across CI jobs.
 | `npx skills add` (skills.sh) | — | — | ref in URL, not recorded | — | none |
 | `paks` | per-skill frontmatter | — | `--version` at install | — | own registry |
 | pixi/conda ([pavel.pink](https://pavel.pink/blog/pixi-skills/)) | `pixi.toml` | `pixi.lock` | semver | conda hashes | conda packaging + pixi in every project |
-| **skills-pm** | `package.json` | `skills-lock.json` | tag/branch/SHA → commit | sha256 tree hash | none — any git repo is a registry |
+| **skills-lock** | `package.json` | `skills-lock.json` | tag/branch/SHA → commit | sha256 tree hash | none — any git repo is a registry |
 
 The pixi approach is the most complete (conda's `run_constraints` can even
 couple a skill's version to the library it documents) but demands conda
-tooling in every consuming project. `skills-pm` deliberately targets the
+tooling in every consuming project. `skills-lock` deliberately targets the
 other end: zero new infrastructure over the way skills are *already*
 distributed — git repos of `SKILL.md` directories.
 

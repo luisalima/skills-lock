@@ -9,10 +9,10 @@ import { execFileSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
-const CLI = path.join(here, '..', 'bin', 'skills-pm.mjs')
+const CLI = path.join(here, '..', 'bin', 'skills-lock.mjs')
 const FIXTURES = path.join(here, 'fixtures', 'skills-repo')
 
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'skills-pm-test-'))
+const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'skills-lock-test-'))
 const skillsRepo = path.join(tmp, 'skills-repo')
 const project = path.join(tmp, 'project')
 
@@ -31,7 +31,7 @@ function runFails(...args) {
   } catch (err) {
     return `${err.stdout ?? ''}${err.stderr ?? ''}`
   }
-  throw new Error(`expected failure: skills-pm ${args.join(' ')}`)
+  throw new Error(`expected failure: skills-lock ${args.join(' ')}`)
 }
 const readJSON = (f) => JSON.parse(fs.readFileSync(f, 'utf8'))
 let passed = 0

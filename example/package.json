@@ -1,5 +1,5 @@
 {
-  "name": "skills-pm-example",
+  "name": "skills-lock-example",
   "private": true,
   "skills": {
     "frontend-design": "anthropics/skills",

@@ -8,8 +8,8 @@ import { hashTree } from './integrity.mjs'
 import { agentTargets } from './agents.mjs'
 
 export function cacheRoot(root) {
-  if (process.env.SKILLS_PM_CACHE) {
-    const dir = path.resolve(process.env.SKILLS_PM_CACHE)
+  if (process.env.SKILLS_LOCK_CACHE) {
+    const dir = path.resolve(process.env.SKILLS_LOCK_CACHE)
     fs.mkdirSync(dir, { recursive: true })
     return dir
   }
@@ -47,7 +47,7 @@ function resolveSkill(root, name, entry, locked, { frozen, update }) {
   if (frozen) {
     if (!locked?.commit || locked.spec !== spec.raw) {
       throw new Error(
-        `skill "${name}" is not pinned by ${LOCKFILE_NAME} (run \`skills-pm install\` and commit the lockfile)`
+        `skill "${name}" is not pinned by ${LOCKFILE_NAME} (run \`skills-lock install\` and commit the lockfile)`
       )
     }
     commit = locked.commit
@@ -75,7 +75,7 @@ function resolveSkill(root, name, entry, locked, { frozen, update }) {
 function assertFrozenMatch(name, spec, locked, integrity) {
   if (!locked || locked.spec !== spec.raw) {
     throw new Error(
-      `skill "${name}": ${LOCKFILE_NAME} is out of date with package.json (run \`skills-pm install\`)`
+      `skill "${name}": ${LOCKFILE_NAME} is out of date with package.json (run \`skills-lock install\`)`
     )
   }
   if (locked.integrity !== integrity) {
@@ -100,7 +100,7 @@ export function installAll(root, { frozen = false, update = false, only = null }
   const lock = loadLock(root) ?? { lockfileVersion: LOCKFILE_VERSION, skills: {} }
   const names = Object.keys(manifest.skills)
   if (names.length === 0) {
-    console.log('no skills declared in package.json ("skills" field) — try `skills-pm add <source>`')
+    console.log('no skills declared in package.json ("skills" field) — try `skills-lock add <source>`')
     return
   }
   if (frozen && only) throw new Error('--frozen cannot be combined with a partial update')

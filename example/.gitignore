@@ -1,5 +1,5 @@
 # Installed skills are reproducible from skills-lock.json — restore with:
-#   npx skills-pm install --frozen
+#   npx skills-lock install --frozen
 .claude/
 .cursor/
 .skills/

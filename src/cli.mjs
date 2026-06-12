@@ -6,21 +6,21 @@ import { resolveRef, ensureCommit } from './git.mjs'
 import { discoverSkills, findSkill } from './skills.mjs'
 import { installAll, removeSkills, cacheRoot } from './install.mjs'
 
-const HELP = `skills-pm — declarative package management for agent skills
+const HELP = `skills-lock — the lock layer for agent skills
 
 Skills are declared in package.json under "skills" and pinned in ${LOCKFILE_NAME}.
 
 Usage:
-  skills-pm install [--frozen]        install all declared skills (--frozen: CI mode,
+  skills-lock install [--frozen]        install all declared skills (--frozen: CI mode,
                                       verify against the lockfile, never re-resolve)
-  skills-pm add <source> [options]    add skill(s) from a source and install
+  skills-lock add <source> [options]    add skill(s) from a source and install
       --skill <name>                  pick skill(s) when the source contains several
                                       (repeatable)
       --path <dir>                    explicit path to the skill inside the source
       --list                          list skills in the source without installing
-  skills-pm update [name...]          re-resolve floating refs (branches) and reinstall
-  skills-pm remove <name...>          remove skill(s) from manifest, lock, and agent dirs
-  skills-pm list                      show declared skills and their pinned commits
+  skills-lock update [name...]          re-resolve floating refs (branches) and reinstall
+  skills-lock remove <name...>          remove skill(s) from manifest, lock, and agent dirs
+  skills-lock list                      show declared skills and their pinned commits
 
 Sources:
   owner/repo[#ref]      GitHub (ref = tag, branch, or commit SHA)
@@ -57,7 +57,7 @@ async function cmdAdd(argv) {
     allowPositionals: true,
   })
   const source = positionals[0]
-  if (!source) throw new Error('usage: skills-pm add <source> [--skill name] [--path dir] [--list]')
+  if (!source) throw new Error('usage: skills-lock add <source> [--skill name] [--path dir] [--list]')
 
   const root = requireRoot()
   const spec = parseSpec(values.path ? { source, path: values.path } : source, source)
@@ -155,7 +155,7 @@ export async function main(argv) {
     case 'remove':
     case 'rm': {
       const { positionals } = parseArgs({ args: rest, allowPositionals: true })
-      if (!positionals.length) throw new Error('usage: skills-pm remove <name...>')
+      if (!positionals.length) throw new Error('usage: skills-lock remove <name...>')
       removeSkills(requireRoot(), positionals)
       break
     }
@@ -170,6 +170,6 @@ export async function main(argv) {
       console.log(HELP)
       break
     default:
-      throw new Error(`unknown command "${command}" — see \`skills-pm help\``)
+      throw new Error(`unknown command "${command}" — see \`skills-lock help\``)
   }
 }

@@ -1,10 +1,10 @@
 {
-  "name": "skills-pm",
+  "name": "skills-lock",
   "version": "0.1.0",
-  "description": "Declarative package management for agent skills — manifest in package.json, lockfile with pinned commits, reproducible installs.",
+  "description": "The lock layer for agent skills — manifest in package.json, skills-lock.json with pinned commits and content hashes, reproducible installs.",
   "type": "module",
   "bin": {
-    "skills-pm": "bin/skills-pm.mjs"
+    "skills-lock": "bin/skills-lock.mjs"
   },
   "files": [
     "bin",
